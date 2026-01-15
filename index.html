@@ -1,0 +1,25 @@
+<form id="contactForm">
+  <input type="text" name="name" placeholder="Имя">
+  <input type="email" name="email" placeholder="Email">
+  <textarea name="message" placeholder="Сообщение"></textarea>
+  <button type="submit">Отправить</button>
+</form>
+
+<script>
+document.getElementById('contactForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData(e.target);
+  const data = Object.fromEntries(formData);
+  
+  // Добавляем дополнительную информацию
+  data.timestamp = new Date().toISOString();
+  data.pageUrl = window.location.href;
+  
+  // Отправляем на сервер
+  await saveToServer(data, 'contact_form');
+  
+  alert('Данные отправлены!');
+  e.target.reset();
+});
+</script>
