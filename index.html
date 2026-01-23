@@ -3,412 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BeamNG Crash Simulator | Полная 3D версия</title>
+    <title>BeamNG Crash Simulator | Готово к игре</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Three.js с полным набором функций -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/TextureLoader.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/stats.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/BloomPass.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.min.js"></script>
-    <!-- Cannon.js для физики -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.20.0/cannon.min.js"></script>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #000; font-family: Arial, sans-serif; }
+        #gameCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+        #ui { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+        #ui > * { pointer-events: auto; }
+        .hud { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; color: white; }
+        .controls { position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; color: white; }
+        .speed { font-size: 24px; font-weight: bold; color: #4CAF50; }
+        .damage { color: #ff4444; margin-top: 10px; }
+        button { background: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #1976D2; }
+    </style>
 </head>
 <body>
-    <!-- Загрузочный экран -->
-    <div id="loading">
-        <div class="loading-content">
-            <div class="logo">
-                <div class="car-icon">
-                    <i class="fas fa-car"></i>
-                    <i class="fas fa-car-crash crash-icon"></i>
-                </div>
-                <h1>BEAMNG-STYLE CRASH SIM</h1>
-                <p class="tagline">Реалистичная физика повреждений в браузере</p>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar" id="progressBar"></div>
-                <div class="progress-text" id="progressText">Инициализация движка...</div>
-            </div>
-            <div class="tips">
-                <div class="tip">
-                    <i class="fas fa-bolt"></i>
-                    <span>Зажмите W для разгона до 100+ км/ч</span>
-                </div>
-                <div class="tip">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Врезайтесь в препятствия для теста физики</span>
-                </div>
-                <div class="tip">
-                    <i class="fas fa-sync-alt"></i>
-                    <span>Нажмите R для респавна машины</span>
-                </div>
-            </div>
-            <div class="tech-info">
-                <div class="tech-item">
-                    <i class="fas fa-cube"></i>
-                    <span>Three.js 3D Engine</span>
-                </div>
-                <div class="tech-item">
-                    <i class="fas fa-cogs"></i>
-                    <span>Cannon.js Physics</span>
-                </div>
-                <div class="tech-item">
-                    <i class="fas fa-memory"></i>
-                    <span>Real-time Deformation</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Игровой интерфейс -->
-    <div id="gameUI">
-        <!-- Верхняя панель -->
-        <div id="topPanel">
-            <div class="game-brand">
-                <i class="fas fa-car-crash"></i>
-                <span>BEAMNG-STYLE SIMULATOR</span>
-                <span class="version">v2.0</span>
-            </div>
-            <div class="performance">
-                <div class="perf-item">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>FPS: <span id="fpsCounter">60</span></span>
-                </div>
-                <div class="perf-item">
-                    <i class="fas fa-microchip"></i>
-                    <span>Physics: <span id="physicsCounter">60</span>Hz</span>
-                </div>
-                <div class="perf-item">
-                    <i class="fas fa-clock"></i>
-                    <span>Time: <span id="gameTimer">00:00</span></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Центральный HUD -->
-        <div id="centerHUD">
-            <!-- Спидометр -->
-            <div class="speedometer">
-                <div class="speed-display">
-                    <div class="speed-value" id="speedValue">0</div>
-                    <div class="speed-unit">км/ч</div>
-                </div>
-                <div class="speed-bar">
-                    <div class="speed-fill" id="speedFill"></div>
-                </div>
-                <div class="speed-label">
-                    <i class="fas fa-tachometer-alt"></i> СКОРОСТЬ
-                </div>
-            </div>
-
-            <!-- Индикатор повреждений -->
-            <div class="damage-indicator">
-                <div class="damage-title">
-                    <i class="fas fa-car-crash"></i>
-                    <span>СОСТОЯНИЕ КУЗОВА</span>
-                </div>
-                <div class="damage-parts">
-                    <div class="damage-part">
-                        <div class="part-name">Перед</div>
-                        <div class="part-bar">
-                            <div class="part-fill" id="damageFront" style="width: 0%"></div>
-                        </div>
-                        <div class="part-value" id="damageFrontValue">0%</div>
-                    </div>
-                    <div class="damage-part">
-                        <div class="part-name">Зад</div>
-                        <div class="part-bar">
-                            <div class="part-fill" id="damageRear" style="width: 0%"></div>
-                        </div>
-                        <div class="part-value" id="damageRearValue">0%</div>
-                    </div>
-                    <div class="damage-part">
-                        <div class="part-name">Левый бок</div>
-                        <div class="part-bar">
-                            <div class="part-fill" id="damageLeft" style="width: 0%"></div>
-                        </div>
-                        <div class="part-value" id="damageLeftValue">0%</div>
-                    </div>
-                    <div class="damage-part">
-                        <div class="part-name">Правый бок</div>
-                        <div class="part-bar">
-                            <div class="part-fill" id="damageRight" style="width: 0%"></div>
-                        </div>
-                        <div class="part-value" id="damageRightValue">0%</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Счетчик столкновений -->
-            <div class="collision-counter">
-                <div class="counter-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div class="counter-info">
-                    <div class="counter-label">СТОЛКНОВЕНИЙ</div>
-                    <div class="counter-value" id="collisionCount">0</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Панель управления -->
-        <div id="controlsPanel">
-            <div class="controls-section">
-                <h4><i class="fas fa-gamepad"></i> УПРАВЛЕНИЕ</h4>
-                <div class="controls-grid">
-                    <div class="control-item">
-                        <div class="key key-w"><i class="fas fa-arrow-up"></i> W</div>
-                        <span>Газ</span>
-                    </div>
-                    <div class="control-item">
-                        <div class="key key-s"><i class="fas fa-arrow-down"></i> S</div>
-                        <span>Тормоз/Назад</span>
-                    </div>
-                    <div class="control-item">
-                        <div class="key key-a"><i class="fas fa-arrow-left"></i> A</div>
-                        <span>Влево</span>
-                    </div>
-                    <div class="control-item">
-                        <div class="key key-d"><i class="fas fa-arrow-right"></i> D</div>
-                        <span>Вправо</span>
-                    </div>
-                    <div class="control-item">
-                        <div class="key key-r">R</div>
-                        <span>Респавн</span>
-                    </div>
-                    <div class="control-item">
-                        <div class="key key-c">C</div>
-                        <span>Камера</span>
-                    </div>
-                    <div class="control-item">
-                        <div class="key key-space">SPACE</div>
-                        <span>Ручной тормоз</span>
-                    </div>
-                    <div class="control-item">
-                        <div class="key key-mouse"><i class="fas fa-mouse"></i></div>
-                        <span>Вращение камеры</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="actions-section">
-                <button id="resetBtn" class="action-btn btn-danger">
-                    <i class="fas fa-redo"></i> РЕСПАВН МАШИНЫ
-                </button>
-                <button id="cameraBtn" class="action-btn btn-warning">
-                    <i class="fas fa-camera"></i> СМЕНИТЬ КАМЕРУ
-                </button>
-                <button id="effectsBtn" class="action-btn btn-info">
-                    <i class="fas fa-magic"></i> ПЕРЕКЛЮЧИТЬ ЭФФЕКТЫ
-                </button>
-            </div>
-
-            <div class="stats-section">
-                <h4><i class="fas fa-chart-line"></i> СТАТИСТИКА</h4>
-                <div class="stats-list">
-                    <div class="stat-item">
-                        <span>Макс. скорость:</span>
-                        <span id="maxSpeed">0 км/ч</span>
-                    </div>
-                    <div class="stat-item">
-                        <span>Общий урон:</span>
-                        <span id="totalDamage">0%</span>
-                    </div>
-                    <div class="stat-item">
-                        <span>Самый сильный удар:</span>
-                        <span id="maxImpact">0 Н</span>
-                    </div>
-                    <div class="stat-item">
-                        <span>Оторвано деталей:</span>
-                        <span id="detachedParts">0</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Правая панель информации -->
-        <div id="rightPanel">
-            <div class="info-card">
-                <h4><i class="fas fa-info-circle"></i> ФИЗИКА ПОВРЕЖДЕНИЙ</h4>
-                <ul class="info-list">
-                    <li><i class="fas fa-check-circle"></i> Real-time soft-body deformation</li>
-                    <li><i class="fas fa-check-circle"></i> Accumulative damage system</li>
-                    <li><i class="fas fa-check-circle"></i> Part detachment physics</li>
-                    <li><i class="fas fa-check-circle"></i> Material-based destruction</li>
-                </ul>
-            </div>
-
-            <div class="info-card">
-                <h4><i class="fas fa-cogs"></i> СИСТЕМНЫЕ НАСТРОЙКИ</h4>
-                <div class="settings">
-                    <div class="setting">
-                        <label>
-                            <input type="checkbox" id="bloomToggle" checked>
-                            <span class="checkmark"></span>
-                            <span class="setting-label">Bloom эффекты</span>
-                        </label>
-                    </div>
-                    <div class="setting">
-                        <label>
-                            <input type="checkbox" id="slowmoToggle" checked>
-                            <span class="checkmark"></span>
-                            <span class="setting-label">Замедление при ударах</span>
-                        </label>
-                    </div>
-                    <div class="setting">
-                        <label>
-                            <input type="checkbox" id="damageToggle" checked>
-                            <span class="checkmark"></span>
-                            <span class="setting-label">Деформация кузова</span>
-                        </label>
-                    </div>
-                    <div class="setting">
-                        <label>
-                            <input type="checkbox" id="soundToggle" checked>
-                            <span class="checkmark"></span>
-                            <span class="setting-label">Звуковые эффекты</span>
-                        </label>
-                    </div>
-                    <div class="setting">
-                        <label>
-                            <input type="checkbox" id="shadowsToggle" checked>
-                            <span class="checkmark"></span>
-                            <span class="setting-label">Тени и освещение</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="info-card">
-                <h4><i class="fas fa-trophy"></i> ДОСТИЖЕНИЯ</h4>
-                <div class="achievements">
-                    <div class="achievement" data-id="firstCrash">
-                        <i class="fas fa-car-crash"></i>
-                        <span>Первая авария</span>
-                        <div class="achievement-progress">
-                            <div class="progress-fill" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div class="achievement" data-id="speed100">
-                        <i class="fas fa-bolt"></i>
-                        <span>100 км/ч</span>
-                        <div class="achievement-progress">
-                            <div class="progress-fill" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div class="achievement" data-id="totalDamage">
-                        <i class="fas fa-wrench"></i>
-                        <span>Тотальный урон</span>
-                        <div class="achievement-progress">
-                            <div class="progress-fill" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Эффекты -->
-        <div id="effectsOverlay">
-            <div class="crash-effect" id="crashEffect"></div>
-            <div class="screen-shake" id="screenShake"></div>
-        </div>
-
-        <!-- Системные сообщения -->
-        <div id="systemMessages">
-            <div class="message" id="welcomeMsg">
-                <i class="fas fa-flag-checkered"></i>
-                <span>Добро пожаловать! Разгоняйтесь и тестируйте физику повреждений. Управление: W/A/S/D</span>
-                <button class="close-btn">&times;</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Контейнер для игры -->
     <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui">
+        <div class="hud">
+            <div class="speed">Скорость: <span id="speed">0</span> км/ч</div>
+            <div class="damage">Повреждение: <span id="damage">0%</span></div>
+            <div>Столкновений: <span id="collisions">0</span></div>
+        </div>
+        
+        <div class="controls">
+            <div>Управление:</div>
+            <div>W/S - Вперед/Назад</div>
+            <div>A/D - Поворот</div>
+            <div>R - Респавн машины</div>
+            <div>Мышь - Вращение камеры</div>
+            <button onclick="resetCar()"><i class="fas fa-redo"></i> Респавн</button>
+            <button onclick="togglePhysics()"><i class="fas fa-cogs"></i> Физика</button>
+        </div>
+    </div>
 
-    <!-- Аудио элементы -->
-    <audio id="engineSound" loop preload="auto">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-sports-car-racing-engine-1104.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="crashSound" preload="auto">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-car-crash-with-broken-glass-1236.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="screechSound" preload="auto">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-tire-screech-1070.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="metalCrunch" preload="auto">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-metal-hit-impact-909.mp3" type="audio/mpeg">
-    </audio>
-
-    <!-- Основной скрипт игры -->
     <script src="script.js"></script>
-
-    <!-- Инициализация -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Симуляция загрузки
-            const loading = document.getElementById('loading');
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            
-            const loadingStages = [
-                "Инициализация 3D движка...",
-                "Загрузка физического движка...",
-                "Создание игрового мира...",
-                "Генерация текстур...",
-                "Настройка освещения...",
-                "Загрузка моделей...",
-                "Подготовка к запуску..."
-            ];
-            
-            let stage = 0;
-            
-            function updateProgress() {
-                if (stage >= loadingStages.length * 20) {
-                    progressBar.style.width = '100%';
-                    progressText.textContent = 'Загрузка завершена!';
-                    
-                    setTimeout(() => {
-                        loading.style.opacity = '0';
-                        setTimeout(() => {
-                            loading.style.display = 'none';
-                            // Игра запускается автоматически из script.js
-                        }, 500);
-                    }, 500);
-                    return;
-                }
-                
-                const progress = (stage / (loadingStages.length * 20)) * 100;
-                progressBar.style.width = progress + '%';
-                
-                if (stage % 20 === 0) {
-                    const stageIndex = Math.floor(stage / 20);
-                    if (stageIndex < loadingStages.length) {
-                        progressText.textContent = loadingStages[stageIndex];
-                    }
-                }
-                
-                stage++;
-                setTimeout(updateProgress, 50);
-            }
-            
-            updateProgress();
-            
-            // Закрытие приветственного сообщения
-            document.querySelector('.close-btn')?.addEventListener('click', function() {
-                document.getElementById('welcomeMsg').style.display = 'none';
-            });
-        });
-    </script>
 </body>
 </html>
