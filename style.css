@@ -2,16 +2,46 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-    font-family: Arial, sans-serif;
     overflow: hidden;
-    background: #111;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     color: #fff;
 }
 
-#container {
+#loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0f3460;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    z-index: 1000;
+    transition: opacity 0.5s;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #e94560;
+    animation: spin 1s linear infinite;
+    margin-top: 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+#gameContainer {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -20,31 +50,271 @@ body {
     z-index: 1;
 }
 
-#info {
+#ui {
     position: absolute;
-    top: 20px;
-    left: 20px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+    padding: 20px;
+}
+
+#ui > * {
+    pointer-events: auto;
+}
+
+#header {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px 25px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#header h1 {
+    color: #e94560;
+    font-size: 28px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#subtitle {
+    color: #6dd5ed;
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 1px;
+}
+
+#hud {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.hud-item {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 12px;
+    min-width: 180px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.hud-label {
+    color: #6dd5ed;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hud-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.damage-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.damage-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #FFC107, #FF5722, #D32F2F);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+#controls {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 20px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+    max-width: 300px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#controls h3 {
+    color: #6dd5ed;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.control-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.control-row:last-child {
+    border-bottom: none;
+}
+
+.key {
+    background: rgba(233, 69, 96, 0.2);
+    border: 2px solid #e94560;
+    color: #e94560;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+    font-size: 18px;
+}
+
+#info-panel {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 20px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+    max-width: 350px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#info-panel h3 {
+    color: #6dd5ed;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#info-panel p {
+    margin-bottom: 8px;
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#resetBtn {
+    background: linear-gradient(135deg, #e94560 0%, #d32f2f 100%);
+    color: white;
+    border: none;
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 300px;
+    transition: all 0.3s;
+    box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+}
+
+#resetBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(233, 69, 96, 0.6);
+}
+
+#resetBtn:active {
+    transform: translateY(0);
+}
+
+#debug {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
     background: rgba(0, 0, 0, 0.7);
     padding: 15px;
     border-radius: 10px;
-    z-index: 2;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#debug label {
+    display: block;
+    margin-bottom: 10px;
+    color: #ccc;
     font-size: 14px;
-    line-height: 1.5;
-    max-width: 300px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-#speed, #damage {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 10px 15px;
-    border-radius: 10px;
-    z-index: 2;
-    font-size: 16px;
-    font-weight: bold;
+#debug label:last-child {
+    margin-bottom: 0;
 }
 
-#damage {
-    top: 70px;
+#crashEffect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.crash-flash {
+    background: rgba(233, 69, 96, 0.3);
+    animation: flash 0.5s;
+}
+
+@keyframes flash {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@media (max-width: 768px) {
+    #ui {
+        padding: 10px;
+    }
+    
+    #hud {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .hud-item {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    #controls, #info-panel, #resetBtn {
+        max-width: 100%;
+    }
+    
+    #debug {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        margin-top: 20px;
+        width: 100%;
+    }
 }
