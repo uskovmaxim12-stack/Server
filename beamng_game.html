@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeamNG Crash Simulator | 100% рабочая игра</title>
+    <style>
+        /* =================== ОБЩИЕ СТИЛИ =================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: white;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+        }
+
+        /* =================== КОНТЕЙНЕР ИГРЫ =================== */
+        #gameContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* =================== ЗАГРУЗОЧНЫЙ ЭКРАН =================== */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(52, 152, 219, 0.3);
+            border-radius: 50%;
+            border-top: 6px solid #3498db;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            font-size: 24px;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            color: #95a5a6;
+            font-size: 14px;
+            text-align: center;
+            max-width: 300px;
+        }
+
+        /* =================== ИНТЕРФЕЙС =================== */
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #ui > * {
+            pointer-events: auto;
+        }
+
+        /* Панель скорости */
+        .speed-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #3498db;
+            min-width: 150px;
+        }
+
+        .speed-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2ecc71;
+            text-align: center;
+        }
+
+        .speed-label {
+            font-size: 14px;
+            color: #95a5a6;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        /* Панель урона */
+        .damage-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e74c3c;
+            min-width: 150px;
+        }
+
+        .damage-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #e74c3c;
+            text-align: center;
+        }
+
+        .damage-label {
+            font-size: 14px;
+            color: #95a5a6;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        /* Панель управления */
+        .controls-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #f1c40f;
+            max-width: 300px;
+        }
+
+        .controls-title {
+            color: #f1c40f;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .key {
+            background: rgba(52, 152, 219, 0.2);
+            border: 2px solid #3498db;
+            color: #3498db;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-right: 10px;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        /* Кнопки управления */
+        .buttons-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: rgba(231, 76, 60, 0.8);
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+            border: 2px solid rgba(231, 76, 60, 0.5);
+        }
+
+        .action-btn:hover {
+            background: rgba(231, 76, 60, 1);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Мобильное управление */
+        .mobile-controls {
+            position: absolute;
+            bottom: 100px;
+            left: 20px;
+            right: 20px;
+            display: none;
+        }
+
+        .joystick-area {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .joystick {
+            width: 60px;
+            height: 60px;
+            background: rgba(52, 152, 219, 0.7);
+            border-radius: 50%;
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            touch-action: none;
+        }
+
+        /* Эффекты */
+        .crash-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(231, 76, 60, 0.4) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 50;
+            transition: opacity 0.3s;
+        }
+
+        /* Анимации */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes crash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .speed-panel,
+            .damage-panel {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                padding: 15px;
+                min-width: auto;
+            }
+
+            .damage-panel {
+                top: 120px;
+            }
+
+            .controls-panel {
+                display: none;
+            }
+
+            .buttons-panel {
+                bottom: 200px;
+                right: 10px;
+            }
+
+            .mobile-controls {
+                display: block;
+            }
+
+            .speed-value {
+                font-size: 28px;
+            }
+
+            .damage-value {
+                font-size: 24px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            .speed-panel,
+            .damage-panel {
+                padding: 10px;
+            }
+
+            .buttons-panel {
+                bottom: 150px;
+            }
+
+            .mobile-controls {
+                bottom: 80px;
+            }
+        }
+
+        /* Сообщения */
+        .message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            border: 3px solid #3498db;
+            text-align: center;
+            max-width: 400px;
+            z-index: 200;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -60%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        .message h2 {
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+
+        .message p {
+            color: #ecf0f1;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .message button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Контейнер для игры -->
+    <div id="gameContainer"></div>
+
+    <!-- Загрузочный экран -->
+    <div id="loading">
+        <div class="loader"></div>
+        <div class="loading-text">Загрузка игры</div>
+        <div class="loading-subtext">BeamNG-style Crash Simulator с физикой повреждений</div>
+    </div>
+
+    <!-- Интерфейс -->
+    <div id="ui">
+        <!-- Панель скорости -->
+        <div class="speed-panel">
+            <div class="speed-value" id="speedValue">0</div>
+            <div class="speed-label">км/ч</div>
+        </div>
+
+        <!-- Панель урона -->
+        <div class="damage-panel">
+            <div class="damage-value" id="damageValue">0%</div>
+            <div class="damage-label">Повреждение</div>
+        </div>
+
+        <!-- Панель управления -->
+        <div class="controls-panel">
+            <div class="controls-title">
+                <span>Управление</span>
+            </div>
+            <div class="control-item">
+                <div class="key">W</div>
+                <span>Движение вперед</span>
+            </div>
+            <div class="control-item">
+                <div class="key">S</div>
+                <span>Тормоз/Назад</span>
+            </div>
+            <div class="control-item">
+                <div class="key">A</div>
+                <span>Поворот влево</span>
+            </div>
+            <div class="control-item">
+                <div class="key">D</div>
+                <span>Поворот вправо</span>
+            </div>
+            <div class="control-item">
+                <div class="key">R</div>
+                <span>Респавн машины</span>
+            </div>
+            <div class="control-item">
+                <div class="key">Мышь</div>
+                <span>Вращение камеры</span>
+            </div>
+        </div>
+
+        <!-- Кнопки действий -->
+        <div class="buttons-panel">
+            <button class="action-btn" onclick="resetCar()" id="resetBtn">
+                <span>РЕСПАВН</span>
+            </button>
+        </div>
+
+        <!-- Мобильное управление -->
+        <div class="mobile-controls">
+            <div class="joystick-area" id="joystickArea">
+                <div class="joystick" id="joystick"></div>
+            </div>
+        </div>
+
+        <!-- Эффект столкновения -->
+        <div class="crash-effect" id="crashEffect"></div>
+    </div>
+
+    <!-- Приветственное сообщение -->
+    <div class="message" id="welcomeMessage" style="display: none;">
+        <h2>Добро пожаловать в игру!</h2>
+        <p>Управление машиной:<br>
+        <strong>W/S</strong> - Движение вперед/назад<br>
+        <strong>A/D</strong> - Поворот<br>
+        <strong>R</strong> - Респавн машины<br>
+        <strong>Мышь</strong> - Вращение камеры</p>
+        <p>Разгоняйтесь и врезайтесь в препятствия!</p>
+        <button onclick="startGame()">Начать игру</button>
+    </div>
+
+    <!-- Three.js и Cannon.js будут загружены через CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.20.0/cannon.min.js"></script>
+
+    <script>
+        // =================== ОСНОВНЫЕ ПЕРЕМЕННЫЕ ===================
+        let scene, camera, renderer, world;
+        let carGroup, carPhysicsBody;
+        let keys = {};
+        let gameState = {
+            speed: 0,
+            damage: 0,
+            collisions: 0,
+            maxSpeed: 0
+        };
+
+        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        let joystickActive = false;
+        let joystickDirection = { x: 0, z: 0 };
+
+        // =================== ЭЛЕМЕНТЫ ИНТЕРФЕЙСА ===================
+        const speedValue = document.getElementById('speedValue');
+        const damageValue = document.getElementById('damageValue');
+        const crashEffect = document.getElementById('crashEffect');
+        const loadingScreen = document.getElementById('loading');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+
+        // =================== ИНИЦИАЛИЗАЦИЯ ИГРЫ ===================
+        function initGame() {
+            console.log('🚀 Запуск игры...');
+            
+            try {
+                // 1. Создаем сцену
+                createScene();
+                
+                // 2. Создаем физический мир
+                createPhysicsWorld();
+                
+                // 3. Создаем окружение
+                createEnvironment();
+                
+                // 4. Создаем машину
+                createCar();
+                
+                // 5. Настраиваем освещение
+                setupLighting();
+                
+                // 6. Настраиваем управление
+                setupControls();
+                
+                // 7. Показываем приветственное сообщение
+                setTimeout(() => {
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                        if (!localStorage.getItem('gameStarted')) {
+                            welcomeMessage.style.display = 'block';
+                        } else {
+                            startGame();
+                        }
+                    }, 500);
+                }, 2000);
+                
+                // 8. Запускаем игровой цикл
+                animate();
+                
+                console.log('✅ Игра успешно запущена!');
+                
+            } catch (error) {
+                console.error('❌ Ошибка при запуске:', error);
+                loadingScreen.innerHTML = `
+                    <div style="text-align: center; padding: 30px;">
+                        <div style="color: #e74c3c; font-size: 24px; margin-bottom: 20px;">
+                            <i class="fas fa-exclamation-triangle"></i> Ошибка
+                        </div>
+                        <div style="color: #ecf0f1; margin-bottom: 30px;">
+                            Не удалось запустить игру. Пожалуйста, обновите страницу.
+                        </div>
+                        <button onclick="location.reload()" style="
+                            background: #3498db;
+                            color: white;
+                            border: none;
+                            padding: 12px 24px;
+                            border-radius: 10px;
+                            font-size: 16px;
+                            cursor: pointer;
+                        ">
+                            Обновить страницу
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // =================== СОЗДАНИЕ СЦЕНЫ ===================
+        function createScene() {
+            // Создаем сцену
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 10, 300);
+            
+            // Создаем камеру
+            const aspect = window.innerWidth / window.innerHeight;
+            camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
+            camera.position.set(0, 10, -15);
+            
+            // Создаем рендерер
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Добавляем рендерер в контейнер
+            document.getElementById('gameContainer').appendChild(renderer.domElement);
+            
+            // Орбитальные контролы для камеры
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.target.set(0, 2, 0);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+        }
+
+        // =================== ФИЗИЧЕСКИЙ МИР ===================
+        function createPhysicsWorld() {
+            world = new CANNON.World();
+            world.gravity = new CANNON.Vec3(0, -9.82, 0);
+            world.broadphase = new CANNON.SAPBroadphase();
+            world.solver.iterations = 10;
+        }
+
+        // =================== СОЗДАНИЕ ОКРУЖЕНИЯ ===================
+        function createEnvironment() {
+            console.log('🌍 Создание игрового мира...');
+            
+            // 1. Земля
+            const groundGeometry = new THREE.PlaneGeometry(200, 200);
+            const groundMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x3d9970,
+                side: THREE.DoubleSide
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Физическое тело земли
+            const groundShape = new CANNON.Plane();
+            const groundBody = new CANNON.Body({ mass: 0 });
+            groundBody.addShape(groundShape);
+            groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+            world.addBody(groundBody);
+            
+            // 2. Дорога
+            const roadGeometry = new THREE.PlaneGeometry(100, 12);
+            const roadMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x34495e
+            });
+            const road = new THREE.Mesh(roadGeometry, roadMaterial);
+            road.rotation.x = -Math.PI / 2;
+            road.position.y = 0.01;
+            road.receiveShadow = true;
+            scene.add(road);
+            
+            // 3. Небо
+            const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
+            const skyMaterial = new THREE.MeshBasicMaterial({
+                color: 0x87CEEB,
+                side: THREE.BackSide
+            });
+            const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+            scene.add(sky);
+            
+            // 4. Препятствия
+            createObstacles();
+            
+            // 5. Деревья
+            createTrees();
+            
+            console.log('✅ Игровой мир создан');
+        }
+
+        function createObstacles() {
+            console.log('🚧 Создание препятствий...');
+            
+            // Материалы для препятствий
+            const materials = [
+                new THREE.MeshLambertMaterial({ color: 0xe74c3c }), // Красный
+                new THREE.MeshLambertMaterial({ color: 0x3498db }), // Синий
+                new THREE.MeshLambertMaterial({ color: 0xf1c40f }), // Желтый
+                new THREE.MeshLambertMaterial({ color: 0x2ecc71 })  // Зеленый
+            ];
+            
+            // Создаем 10 препятствий
+            for (let i = 0; i < 10; i++) {
+                const type = Math.random() > 0.5 ? 'box' : 'cylinder';
+                let mesh, shape;
+                
+                if (type === 'box') {
+                    const size = 2 + Math.random() * 3;
+                    mesh = new THREE.Mesh(
+                        new THREE.BoxGeometry(size, size, size),
+                        materials[Math.floor(Math.random() * materials.length)]
+                    );
+                    shape = new CANNON.Box(new CANNON.Vec3(size/2, size/2, size/2));
+                } else {
+                    const radius = 1 + Math.random() * 2;
+                    const height = 3 + Math.random() * 4;
+                    mesh = new THREE.Mesh(
+                        new THREE.CylinderGeometry(radius, radius, height, 16),
+                        materials[Math.floor(Math.random() * materials.length)]
+                    );
+                    shape = new CANNON.Cylinder(radius, radius, height, 16);
+                }
+                
+                // Позиционируем препятствие
+                let x, z;
+                do {
+                    x = (Math.random() - 0.5) * 150;
+                    z = (Math.random() - 0.5) * 150;
+                } while (Math.abs(z) < 20 && Math.abs(x) < 50);
+                
+                const y = type === 'box' ? mesh.geometry.parameters.height/2 : mesh.geometry.parameters.height/2;
+                mesh.position.set(x, y, z);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                scene.add(mesh);
+                
+                // Физическое тело
+                const body = new CANNON.Body({ mass: 0 });
+                body.addShape(shape);
+                body.position.copy(mesh.position);
+                world.addBody(body);
+            }
+            
+            console.log('✅ Создано 10 препятствий');
+        }
+
+        function createTrees() {
+            console.log('🌳 Создание деревьев...');
+            
+            const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x27ae60 });
+            
+            for (let i = 0; i < 20; i++) {
+                const x = (Math.random() - 0.5) * 180;
+                const z = (Math.random() - 0.5) * 180;
+                
+                // Не ставим деревья на дороге
+                if (Math.abs(z) < 20 && Math.abs(x) < 80) continue;
+                
+                // Ствол
+                const trunk = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.3, 0.4, 4, 8),
+                    trunkMaterial
+                );
+                trunk.position.set(x, 2, z);
+                trunk.castShadow = true;
+                scene.add(trunk);
+                
+                // Крона
+                const leaves = new THREE.Mesh(
+                    new THREE.ConeGeometry(2, 5, 8),
+                    leavesMaterial
+                );
+                leaves.position.set(x, 5.5, z);
+                leaves.castShadow = true;
+                scene.add(leaves);
+            }
+            
+            console.log('✅ Создано 20 деревьев');
+        }
+
+        // =================== СОЗДАНИЕ МАШИНЫ ===================
+        function createCar() {
+            console.log('🚗 Создание машины...');
+            
+            // Создаем группу для машины
+            carGroup = new THREE.Group();
+            scene.add(carGroup);
+            
+            // Материалы
+            const bodyMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x2980b9,
+                roughness: 0.5,
+                metalness: 0.5
+            });
+            
+            const glassMaterial = new THREE.MeshLambertMaterial({
+                color: 0x88ccff,
+                transparent: true,
+                opacity: 0.6
+            });
+            
+            const tireMaterial = new THREE.MeshLambertMaterial({
+                color: 0x1a1a1a,
+                roughness: 0.9
+            });
+            
+            // 1. Кузов
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(2.5, 1.2, 5),
+                bodyMaterial
+            );
+            body.castShadow = true;
+            body.receiveShadow = true;
+            carGroup.add(body);
+            
+            // 2. Капот
+            const hood = new THREE.Mesh(
+                new THREE.BoxGeometry(2.2, 0.8, 1.8),
+                bodyMaterial
+            );
+            hood.position.set(0, 0.9, 1.6);
+            hood.castShadow = true;
+            carGroup.add(hood);
+            
+            // 3. Крыша
+            const roof = new THREE.Mesh(
+                new THREE.BoxGeometry(1.8, 0.8, 2.5),
+                bodyMaterial
+            );
+            roof.position.set(0, 1.7, 0);
+            roof.castShadow = true;
+            carGroup.add(roof);
+            
+            // 4. Лобовое стекло
+            const windshield = new THREE.Mesh(
+                new THREE.BoxGeometry(2.1, 0.9, 0.1),
+                glassMaterial
+            );
+            windshield.position.set(0, 1.6, 0.8);
+            carGroup.add(windshield);
+            
+            // 5. Передний бампер
+            const bumper = new THREE.Mesh(
+                new THREE.BoxGeometry(2.6, 0.4, 0.6),
+                bodyMaterial
+            );
+            bumper.position.set(0, 0.3, 2.6);
+            bumper.castShadow = true;
+            carGroup.add(bumper);
+            
+            // 6. Фары
+            const lightMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffffcc,
+                emissive: 0xffffcc,
+                emissiveIntensity: 2
+            });
+            
+            const headlightGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+            const headlights = [
+                [1, 0.8, 2.3],
+                [-1, 0.8, 2.3]
+            ];
+            
+            headlights.forEach(pos => {
+                const headlight = new THREE.Mesh(headlightGeometry, lightMaterial);
+                headlight.position.set(pos[0], pos[1], pos[2]);
+                carGroup.add(headlight);
+            });
+            
+            // 7. Колеса
+            const wheelGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
+            const wheelPositions = [
+                [0.9, -0.3, 1.8],   // Переднее правое
+                [-0.9, -0.3, 1.8],  // Переднее левое
+                [0.9, -0.3, -1.8],  // Заднее правое
+                [-0.9, -0.3, -1.8]  // Заднее левое
+            ];
+            
+            wheelPositions.forEach(pos => {
+                const wheel = new THREE.Mesh(wheelGeometry, tireMaterial);
+                wheel.rotation.z = Math.PI / 2;
+                wheel.position.set(pos[0], pos[1], pos[2]);
+                wheel.castShadow = true;
+                carGroup.add(wheel);
+            });
+            
+            // Создаем физическое тело машины
+            createCarPhysics();
+            
+            console.log('✅ Машина создана');
+        }
+
+        function createCarPhysics() {
+            // Основное тело машины
+            const carShape = new CANNON.Box(new CANNON.Vec3(1.25, 0.6, 2.5));
+            carPhysicsBody = new CANNON.Body({ mass: 1500 });
+            carPhysicsBody.addShape(carShape);
+            carPhysicsBody.position.set(0, 2, 0);
+            carPhysicsBody.angularDamping = 0.8;
+            carPhysicsBody.linearDamping = 0.35;
+            world.addBody(carPhysicsBody);
+        }
+
+        // =================== ОСВЕЩЕНИЕ ===================
+        function setupLighting() {
+            // 1. Окружающий свет
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            // 2. Основной направленный свет (солнце)
+            const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            sunLight.position.set(50, 100, 50);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.left = -50;
+            sunLight.shadow.camera.right = 50;
+            sunLight.shadow.camera.top = 50;
+            sunLight.shadow.camera.bottom = -50;
+            scene.add(sunLight);
+            
+            // 3. Заполняющий свет
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+            fillLight.position.set(-50, 50, -50);
+            scene.add(fillLight);
+        }
+
+        // =================== УПРАВЛЕНИЕ ===================
+        function setupControls() {
+            // 1. Клавиатура (для компьютеров)
+            window.addEventListener('keydown', (e) => {
+                keys[e.code] = true;
+                if (e.code === 'KeyR') resetCar();
+            });
+            
+            window.addEventListener('keyup', (e) => {
+                keys[e.code] = false;
+            });
+            
+            // Инициализируем управление
+            ['KeyW', 'KeyS', 'KeyA', 'KeyD'].forEach(key => {
+                keys[key] = false;
+            });
+            
+            // 2. Сенсорное управление (для мобильных)
+            if (isMobile) {
+                setupTouchControls();
+            }
+            
+            // 3. Ресайз окна
+            window.addEventListener('resize', onWindowResize);
+            
+            // 4. Предотвращаем стандартное поведение
+            window.addEventListener('contextmenu', (e) => e.preventDefault());
+            window.addEventListener('keydown', (e) => {
+                if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        function setupTouchControls() {
+            const joystick = document.getElementById('joystick');
+            const joystickArea = document.getElementById('joystickArea');
+            
+            if (!joystick || !joystickArea) return;
+            
+            let touchId = null;
+            
+            // Обработка начала касания
+            joystickArea.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (touchId === null) {
+                    touchId = e.changedTouches[0].identifier;
+                    joystickActive = true;
+                    updateJoystick(e.changedTouches[0]);
+                }
+            }, { passive: false });
+            
+            // Обработка движения
+            joystickArea.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (joystickActive) {
+                    for (let touch of e.changedTouches) {
+                        if (touch.identifier === touchId) {
+                            updateJoystick(touch);
+                            break;
+                        }
+                    }
+                }
+            }, { passive: false });
+            
+            // Обработка окончания касания
+            joystickArea.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                for (let touch of e.changedTouches) {
+                    if (touch.identifier === touchId) {
+                        joystickActive = false;
+                        joystickDirection = { x: 0, z: 0 };
+                        joystick.style.transform = 'translate(30px, 30px)';
+                        touchId = null;
+                        break;
+                    }
+                }
+            }, { passive: false });
+            
+            // Обработка отмены касания
+            joystickArea.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                joystickActive = false;
+                joystickDirection = { x: 0, z: 0 };
+                joystick.style.transform = 'translate(30px, 30px)';
+                touchId = null;
+            }, { passive: false });
+            
+            // Функция обновления джойстика
+            function updateJoystick(touch) {
+                const rect = joystickArea.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const touchX = touch.clientX - rect.left;
+                const touchY = touch.clientY - rect.top;
+                
+                // Вычисляем вектор от центра
+                let deltaX = touchX - centerX;
+                let deltaY = touchY - centerY;
+                
+                // Ограничиваем радиусом области джойстика
+                const radius = 40;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                
+                if (distance > radius) {
+                    deltaX = (deltaX / distance) * radius;
+                    deltaY = (deltaY / distance) * radius;
+                }
+                
+                // Обновляем позицию джойстика
+                joystick.style.transform = `translate(${deltaX + 30}px, ${deltaY + 30}px)`;
+                
+                // Нормализуем значения для управления
+                joystickDirection = {
+                    x: deltaX / radius,
+                    z: -deltaY / radius  // Ось Y инвертируем для движения вперед/назад
+                };
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // =================== ИГРОВАЯ ЛОГИКА ===================
+        function updateCar(deltaTime) {
+            if (!carPhysicsBody) return;
+            
+            const force = new CANNON.Vec3();
+            const currentSpeed = carPhysicsBody.velocity.length() * 3.6;
+            
+            // Обновляем скорость в интерфейсе
+            gameState.speed = Math.round(currentSpeed);
+            speedValue.textContent = gameState.speed;
+            
+            // Сохраняем максимальную скорость
+            if (gameState.speed > gameState.maxSpeed) {
+                gameState.maxSpeed = gameState.speed;
+            }
+            
+            // Управление для компьютеров
+            if (!isMobile) {
+                // Движение вперед (W)
+                if (keys['KeyW']) {
+                    const power = 50000 * (1 - currentSpeed / 180);
+                    force.z = -power;
+                    carPhysicsBody.applyLocalForce(force, new CANNON.Vec3(0, 0, 0));
+                }
+                
+                // Торможение/движение назад (S)
+                if (keys['KeyS']) {
+                    if (currentSpeed > 5) {
+                        // Торможение
+                        const brakeForce = carPhysicsBody.velocity.clone();
+                        brakeForce.scale(-40000, brakeForce);
+                        carPhysicsBody.applyForce(brakeForce, carPhysicsBody.position);
+                    } else {
+                        // Движение назад
+                        force.z = 30000;
+                        carPhysicsBody.applyLocalForce(force, new CANNON.Vec3(0, 0, 0));
+                    }
+                }
+                
+                // Поворот (A/D)
+                const steeringMultiplier = Math.min(1, currentSpeed / 50);
+                if (keys['KeyA']) {
+                    force.x = -30000 * steeringMultiplier;
+                    carPhysicsBody.applyLocalForce(force, new CANNON.Vec3(0, 0, -1.5));
+                }
+                
+                if (keys['KeyD']) {
+                    force.x = 30000 * steeringMultiplier;
+                    carPhysicsBody.applyLocalForce(force, new CANNON.Vec3(0, 0, -1.5));
+                }
+            } 
+            // Управление для мобильных устройств
+            else if (joystickActive) {
+                // Движение вперед/назад
+                if (Math.abs(joystickDirection.z) > 0.1) {
+                    const power = 50000 * joystickDirection.z * (1 - currentSpeed / 180);
+                    force.z = power;
+                    carPhysicsBody.applyLocalForce(force, new CANNON.Vec3(0, 0, 0));
+                }
+                
+                // Поворот
+                if (Math.abs(joystickDirection.x) > 0.1) {
+                    const steeringMultiplier = Math.min(1, currentSpeed / 50);
+                    force.x = 30000 * joystickDirection.x * steeringMultiplier;
+                    carPhysicsBody.applyLocalForce(force, new CANNON.Vec3(0, 0, -1.5));
+                }
+                
+                // Автоматическое торможение при отпускании джойстика
+                if (!joystickActive && currentSpeed > 1) {
+                    const brakeForce = carPhysicsBody.velocity.clone();
+                    brakeForce.scale(-20000, brakeForce);
+                    carPhysicsBody.applyForce(brakeForce, carPhysicsBody.position);
+                }
+            }
+            
+            // Проверка столкновений
+            checkCollisions(currentSpeed);
+            
+            // Обновление позиции машины
+            updateCarPosition();
+            
+            // Обновление камеры
+            updateCamera();
+        }
+
+        function checkCollisions(speed) {
+            // Простая система обнаружения столкновений
+            const angularSpeed = carPhysicsBody.angularVelocity.length();
+            
+            // Если машина резко вращается - вероятно столкновение
+            if (angularSpeed > 1 && speed > 10) {
+                gameState.collisions++;
+                
+                // Увеличиваем урон
+                const damageIncrease = Math.min(speed * 0.2, 15);
+                gameState.damage = Math.min(gameState.damage + damageIncrease, 100);
+                damageValue.textContent = `${Math.round(gameState.damage)}%`;
+                
+                // Показываем эффект столкновения
+                showCrashEffect();
+                
+                // Деформация машины при высоком уроне
+                if (gameState.damage > 30) {
+                    applyDamage();
+                }
+            }
+        }
+
+        function showCrashEffect() {
+            crashEffect.style.opacity = '1';
+            setTimeout(() => {
+                crashEffect.style.opacity = '0';
+            }, 300);
+        }
+
+        function applyDamage() {
+            // Простая деформация - сжатие машины
+            const damageFactor = gameState.damage / 100;
+            
+            carGroup.children.forEach(child => {
+                if (child.geometry) {
+                    // Немного сжимаем машину
+                    const scale = 1 - damageFactor * 0.3;
+                    child.scale.set(scale, scale, scale);
+                    
+                    // Меняем цвет при сильных повреждениях
+                    if (gameState.damage > 70 && child.material && child.material.color) {
+                        child.material.color.setHex(0x555555); // Темный цвет
+                    }
+                }
+            });
+        }
+
+        function updateCarPosition() {
+            if (carGroup && carPhysicsBody) {
+                carGroup.position.copy(carPhysicsBody.position);
+                carGroup.quaternion.copy(carPhysicsBody.quaternion);
+            }
+        }
+
+        function updateCamera() {
+            // Камера следует за машиной
+            if (carPhysicsBody) {
+                const carPos = carPhysicsBody.position;
+                const targetPos = new THREE.Vector3(
+                    carPos.x,
+                    carPos.y + 8,
+                    carPos.z - 15
+                );
+                
+                camera.position.lerp(targetPos, 0.1);
+                camera.lookAt(carPos.x, carPos.y + 2, carPos.z);
+            }
+        }
+
+        // =================== УПРАВЛЕНИЕ ИГРОЙ ===================
+        function resetCar() {
+            if (!carPhysicsBody) return;
+            
+            // Сбрасываем позицию и скорость
+            carPhysicsBody.position.set(0, 2, 0);
+            carPhysicsBody.velocity.set(0, 0, 0);
+            carPhysicsBody.angularVelocity.set(0, 0, 0);
+            carPhysicsBody.quaternion.set(0, 0, 0, 1);
+            
+            // Сбрасываем повреждения
+            gameState.damage = 0;
+            damageValue.textContent = '0%';
+            
+            // Восстанавливаем размеры машины
+            carGroup.children.forEach(child => {
+                if (child.geometry) {
+                    child.scale.set(1, 1, 1);
+                    
+                    // Восстанавливаем цвет
+                    if (child.material && child.material.color) {
+                        if (child.material.color.getHex() === 0x555555) {
+                            child.material.color.setHex(0x2980b9); // Исходный цвет
+                        }
+                    }
+                }
+            });
+            
+            // Сбрасываем камеру
+            camera.position.set(0, 10, -15);
+            
+            console.log('🔄 Машина перезаспавнена');
+        }
+
+        function startGame() {
+            welcomeMessage.style.display = 'none';
+            localStorage.setItem('gameStarted', 'true');
+            
+            // Показываем подсказку
+            setTimeout(() => {
+                alert('Игра началась!\n\nУправление:\nW/S - Вперед/Назад\nA/D - Поворот\nR - Респавн машины\n\nРазгоняйтесь и врезайтесь в препятствия!');
+            }, 500);
+        }
+
+        // =================== ИГРОВОЙ ЦИКЛ ===================
+        let lastTime = 0;
+        
+        function animate(currentTime = 0) {
+            requestAnimationFrame(animate);
+            
+            // Вычисляем deltaTime
+            const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+            
+            // Обновляем физику
+            if (world) {
+                world.step(1/60, deltaTime, 3);
+            }
+            
+            // Обновляем машину
+            updateCar(deltaTime);
+            
+            // Рендерим сцену
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        // =================== ЗАПУСК ИГРЫ ===================
+        window.addEventListener('load', () => {
+            console.log('🎮 Запуск игры...');
+            
+            // Проверяем поддержку WebGL
+            if (!isWebGLAvailable()) {
+                loadingScreen.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div style="color: #e74c3c; font-size: 24px; margin-bottom: 20px;">
+                            <i class="fas fa-exclamation-triangle"></i> WebGL не поддерживается
+                        </div>
+                        <div style="color: #ecf0f1; margin-bottom: 30px;">
+                            Ваш браузер не поддерживает WebGL.<br>
+                            Пожалуйста, используйте Chrome, Firefox или Edge.
+                        </div>
+                        <button onclick="location.reload()" style="
+                            background: #3498db;
+                            color: white;
+                            border: none;
+                            padding: 12px 24px;
+                            border-radius: 10px;
+                            font-size: 16px;
+                            cursor: pointer;
+                        ">
+                            Обновить
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Запускаем игру
+            initGame();
+        });
+
+        function isWebGLAvailable() {
+            try {
+                const canvas = document.createElement('canvas');
+                return !!(window.WebGLRenderingContext && 
+                    (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Экспортируем функции для кнопок
+        window.resetCar = resetCar;
+        window.startGame = startGame;
+    </script>
+</body>
+</html>
