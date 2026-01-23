@@ -3,26 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BeamNG‑like Crash Simulator</title>
+    <title>Crash Simulator | BeamNG-like Physics</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Three.js – для 3D-графики -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Cannon.js – для реалистичной физики -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.20.0/cannon.min.js"></script>
-    <!-- OrbitControls – для вращения камеры -->
-    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
-    <!-- Stats.js – для отображения FPS -->
-    <script src="https://threejs.org/examples/js/libs/stats.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/stats.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div id="info">
-        <strong>BeamNG‑like Crash Simulator</strong><br>
-        Управление: W/A/S/D – двигаться, R – перезагрузка<br>
-        Деформация включается автоматически при столкновениях.
+    <div id="loading">Загрузка игры... <div class="spinner"></div></div>
+    
+    <div id="ui">
+        <div id="header">
+            <h1><i class="fas fa-car-crash"></i> CRASH SIMULATOR</h1>
+            <div id="subtitle">Реалистичная физика повреждений</div>
+        </div>
+        
+        <div id="hud">
+            <div class="hud-item">
+                <div class="hud-label"><i class="fas fa-tachometer-alt"></i> СКОРОСТЬ</div>
+                <div class="hud-value" id="speed">0 км/ч</div>
+            </div>
+            
+            <div class="hud-item">
+                <div class="hud-label"><i class="fas fa-car-crash"></i> ПОВРЕЖДЕНИЕ</div>
+                <div class="hud-value" id="damage">0%</div>
+                <div class="damage-bar">
+                    <div class="damage-fill" id="damageFill"></div>
+                </div>
+            </div>
+            
+            <div class="hud-item">
+                <div class="hud-label"><i class="fas fa-map-marker-alt"></i> СТОЛКНОВЕНИЙ</div>
+                <div class="hud-value" id="collisions">0</div>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <h3><i class="fas fa-gamepad"></i> УПРАВЛЕНИЕ</h3>
+            <div class="control-row">
+                <div class="key"><i class="fas fa-arrow-up"></i> W</div>
+                <span>Движение вперёд</span>
+            </div>
+            <div class="control-row">
+                <div class="key"><i class="fas fa-arrow-down"></i> S</div>
+                <span>Движение назад</span>
+            </div>
+            <div class="control-row">
+                <div class="key"><i class="fas fa-arrow-left"></i> A</div>
+                <span>Поворот влево</span>
+            </div>
+            <div class="control-row">
+                <div class="key"><i class="fas fa-arrow-right"></i> D</div>
+                <span>Поворот вправо</span>
+            </div>
+            <div class="control-row">
+                <div class="key">R</div>
+                <span>Перезапуск машины</span>
+            </div>
+            <div class="control-row">
+                <div class="key"><i class="fas fa-mouse-pointer"></i></div>
+                <span>Вращение камеры</span>
+            </div>
+            <div class="control-row">
+                <div class="key"><i class="fas fa-mouse"></i></div>
+                <span>Zoom камеры</span>
+            </div>
+        </div>
+        
+        <div id="info-panel">
+            <h3><i class="fas fa-info-circle"></i> ФИЗИКА ПОВРЕЖДЕНИЙ</h3>
+            <p>• Деформация рассчитывается на основе скорости и угла столкновения</p>
+            <p>• Каждая часть кузова имеет свою прочность</p>
+            <p>• Повреждения накапливаются и влияют на управляемость</p>
+            <p>• Сильные удары могут отрывать детали</p>
+        </div>
+        
+        <button id="resetBtn"><i class="fas fa-redo"></i> ПЕРЕЗАПУСТИТЬ СЦЕНУ</button>
+        
+        <div id="debug">
+            <label>
+                <input type="checkbox" id="showPhysics"> Показать физические тела
+            </label>
+            <label>
+                <input type="checkbox" id="slowMotion" checked> Замедленная съёмка
+            </label>
+        </div>
     </div>
-    <div id="speed">Скорость: 0 км/ч</div>
-    <div id="damage">Повреждение: 0%</div>
-    <div id="container"></div>
+    
+    <div id="gameContainer"></div>
+    
+    <div id="crashEffect"></div>
+    
     <script src="script.js"></script>
 </body>
 </html>
